@@ -8,12 +8,25 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"os"
+	"strconv"
 )
 
 func main() {
 	connectToDb()
+
 	countries := readCountries()
 	fmt.Println(countries)
+
+	cont := readContinents()
+	fmt.Println(cont)
+
+	ccmap := readContinentMap()
+	fmt.Println(ccmap)
+
+	percap := readPerCapita()
+	fmt.Println(percap)
+
+	fmt.Println("yay :)")
 }
 
 func readCountries() []CountryModel {
@@ -57,6 +70,162 @@ func readCountries() []CountryModel {
 		}
 	}
 	return countryList
+}
+
+func readContinents() []ContinentModel {
+	filename := fmt.Sprintf("./materials/csv/continents.csv")
+
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("%s was not closed gracefully. %s\n", filename, err)
+		}
+	}(f)
+
+	reader := csv.NewReader(f)
+	data, err := reader.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var continentList []ContinentModel
+
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec ContinentModel
+			for j, field := range line {
+				if j == 0 {
+					code, err := NewContinentCode(field)
+					if err != nil {
+						rec.continentCode, _ = NewContinentCode("XXX")
+					} else {
+						rec.continentCode = code
+					}
+				} else if j == 1 {
+					fmt.Println(field)
+					rec.continentName = field
+				}
+			}
+			continentList = append(continentList, rec)
+		}
+	}
+	return continentList
+}
+
+func readContinentMap() []ContinentMapModel {
+	filename := fmt.Sprintf("./materials/csv/continent_map.csv")
+
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("%s was not closed gracefully. %s\n", filename, err)
+		}
+	}(f)
+
+	reader := csv.NewReader(f)
+	data, err := reader.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var mapList []ContinentMapModel
+
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec ContinentMapModel
+			for j, field := range line {
+				if j == 0 {
+					code, err := NewCountryCode(field)
+					if err != nil {
+						rec.countryCode, _ = NewCountryCode("XXX")
+					} else {
+						rec.countryCode = code
+					}
+				} else if j == 1 {
+					fmt.Println(field)
+
+					code, err := NewContinentCode(field)
+					if err != nil {
+						rec.continentCode, _ = NewContinentCode("XXX")
+					} else {
+						rec.continentCode = code
+					}
+				}
+			}
+			mapList = append(mapList, rec)
+		}
+	}
+	return mapList
+}
+
+func readPerCapita() []PerCapitalModel {
+	filename := fmt.Sprintf("./materials/csv/per_capita.csv")
+
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("%s was not closed gracefully. %s\n", filename, err)
+		}
+	}(f)
+
+	reader := csv.NewReader(f)
+	data, err := reader.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var perCapitaList []PerCapitalModel
+
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec PerCapitalModel
+			for j, field := range line {
+				if j == 0 {
+					code, err := NewCountryCode(field)
+					if err != nil {
+						rec.countryCode, _ = NewCountryCode("XXX")
+					} else {
+						rec.countryCode = code
+					}
+				} else if j == 1 {
+					val, intErr := strconv.Atoi(field)
+					if intErr == nil {
+						yr, err := NewYear(val)
+						if err != nil {
+							rec.year = yr
+						} else {
+							rec.year = 2006
+						}
+					} else {
+						rec.year = 2006
+					}
+				} else if j == 2 {
+					fmt.Println(field)
+
+					val, floatErr := strconv.ParseFloat(field, 64)
+					if floatErr == nil {
+						rec.gdpPerCapita = val
+					} else {
+						rec.gdpPerCapita = 0.0
+					}
+				}
+			}
+			perCapitaList = append(perCapitaList, rec)
+		}
+	}
+	return perCapitaList
 }
 
 func connectToDb() {
