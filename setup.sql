@@ -22,5 +22,5 @@ CREATE TABLE IF NOT EXISTS per_capita
     country_code   VARCHAR(3) PRIMARY KEY REFERENCES countries (country_code) NOT NULL,
     year_column    INT                                                        NOT NULL,
     gdp_per_capita FLOAT                                                      NOT NULL
-        CONSTRAINT check_year_range CHECK (year_column >= 2004 AND year_column <= 2006)
+        CONSTRAINT check_year_range CHECK (year_column >= 2004 AND year_column <= 2012)
 );
