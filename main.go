@@ -2,16 +2,61 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"fmt"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
+	"log"
 	"os"
 )
 
 func main() {
-
 	connectToDb()
+	countries := readCountries()
+	fmt.Println(countries)
+}
 
+func readCountries() []CountryModel {
+	filename := fmt.Sprintf("./materials/csv/countries.csv")
+
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("%s was not closed gracefully. %s\n", filename, err)
+		}
+	}(f)
+
+	reader := csv.NewReader(f)
+	data, err := reader.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var countryList []CountryModel
+
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec CountryModel
+			for j, field := range line {
+				if j == 0 {
+					code, err := NewCountryCode(field)
+					if err != nil {
+						rec.countryCode, _ = NewCountryCode("XXX")
+					} else {
+						rec.countryCode = code
+					}
+				} else if j == 1 {
+					rec.countryName = field
+				}
+			}
+			countryList = append(countryList, rec)
+		}
+	}
+	return countryList
 }
 
 func connectToDb() {
