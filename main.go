@@ -12,21 +12,58 @@ import (
 )
 
 func main() {
-	connectToDb()
+	db := connectToDb()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			fmt.Printf("Database was not closed gracefully. %s\n", err)
+		}
+	}(db)
 
 	countries := readCountries()
-	fmt.Println(countries)
-
 	cont := readContinents()
-	fmt.Println(cont)
-
 	ccmap := readContinentMap()
-	fmt.Println(ccmap)
-
 	percap := readPerCapita()
-	fmt.Println(percap)
 
-	fmt.Println("yay :)")
+	for i := range countries {
+		insert, err := countries[i].Insert(db)
+		if err != nil {
+			return
+		}
+		if insert > 0 {
+			fmt.Println("successful insert")
+		}
+	}
+
+	for i := range cont {
+		insert, err := cont[i].Insert(db)
+		if err != nil {
+			return
+		}
+		if insert > 0 {
+			fmt.Println("successful insert")
+		}
+	}
+
+	for i := range ccmap {
+		insert, err := ccmap[i].Insert(db)
+		if err != nil {
+			return
+		}
+		if insert > 0 {
+			fmt.Println("successful insert")
+		}
+	}
+
+	for i := range percap {
+		insert, err := percap[i].Insert(db)
+		if err != nil {
+			return
+		}
+		if insert > 0 {
+			fmt.Println("successful insert")
+		}
+	}
 }
 
 func readCountries() []CountryModel {
@@ -228,23 +265,19 @@ func readPerCapita() []PerCapitalModel {
 	return perCapitaList
 }
 
-func connectToDb() {
+func connectToDb() *sql.DB {
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", "db", 5432, os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 
 	fmt.Println(psqlconn)
 	db, err := sql.Open("postgres", psqlconn)
 	CheckError(err)
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			fmt.Printf("Database was not closed gracefully. %s\n", err)
-		}
-	}(db)
 
 	err = db.Ping()
 	CheckError(err)
 
 	fmt.Println("Connected!")
+
+	return db
 }
 
 func CheckError(err error) {
