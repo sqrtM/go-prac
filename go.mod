@@ -1,4 +1,4 @@
-module main
+module prac
 
 go 1.22
 

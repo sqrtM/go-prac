@@ -1,4 +1,4 @@
-package main
+package prac
 
 import (
 	"database/sql"
